@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Student Planner</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dashboard-page" id="settingsPage">
+    <div class="page-container">
+        <nav class="navbar">
+            <div class="navbar-left">
+                <div class="logo">LOGO</div>
+                <div class="nav-tabs">
+                    <a href="home.html">HOME</a>
+                    <a href="calendar.html">CALENDAR</a>
+                    <a href="about.html">ABOUT</a>
+                    <a href="settings.html">SETTINGS</a>
+                </div>
+            </div>
+            <div class="navbar-right">
+                <input type="text" class="search-box" placeholder="Search">
+                <div class="profile-icon" onclick="logout()" style="cursor: pointer;" title="Logout">👤</div>
+            </div>
+        </nav>
+        
+        <div class="page-content">
+            <div class="content-card">
+                <h1>Settings</h1>
+                <p style="margin-bottom: 40px;">Manage your account settings and preferences.</p>
+                
+                <div class="settings-section">
+                    <h2>Account Information</h2>
+                    <div class="settings-item">
+                        <label>Full Name</label>
+                        <span style="color: #6b7280;" id="userFullName">-</span>
+                    </div>
+                    <div class="settings-item">
+                        <label>Email Address</label>
+                        <span style="color: #6b7280;" id="userEmail">-</span>
+                    </div>
+                    <div class="settings-item">
+                        <label>Date of Birth</label>
+                        <span style="color: #6b7280;" id="userDOB">-</span>
+                    </div>
+                    <div class="settings-item">
+                        <label></label>
+                        <button id="editProfileBtn" class="settings-button">Edit Profile</button>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h2>Appearance</h2>
+                    <div class="settings-item">
+                        <label>Theme</label>
+                        <select id="themeSelect">
+                            <option value="pastel">Pastel Gradient</option>
+                            <option value="ocean">Ocean Blue</option>
+                            <option value="forest">Forest Green</option>
+                            <option value="sunset">Sunset Orange</option>
+                            <option value="lavender">Lavender Purple</option>
+                            <option value="mint">Mint Fresh</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h2>Preferences</h2>
+                    <div class="settings-item">
+                        <label>Email Notifications</label>
+                        <div>
+                            <span style="color: #6b7280; margin-right: 10px;" id="notificationsToggle">Enabled</span>
+                            <button id="toggleNotificationsBtn" class="settings-button">Toggle</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h2>Security</h2>
+                    <div class="settings-item">
+                        <label>Password</label>
+                        <button id="changePasswordBtn" class="settings-button">Change Password</button>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h2>Data Management</h2>
+                    <div class="settings-item">
+                        <label>Export Data</label>
+                        <button id="exportDataBtn" class="settings-button">Download JSON</button>
+                    </div>
+                    <div class="settings-item">
+                        <label>Delete Account</label>
+                        <button id="deleteAccountBtn" class="settings-button" style="background: #ef4444;">Delete</button>
+                    </div>
+                </div>
+                
+                <button onclick="logout()" class="btn-logout">Logout</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="storage.js"></script>
+    <script type="module" src="auth.js"></script>
+    <script src="app.js"></script>
+    <script src="settings.js"></script>
+</body>
+</html>
