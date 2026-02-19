@@ -1,4 +1,4 @@
-# Student Planner - Fixed Version
+# TaskNest - Fixed Version
 
 ## Issues Fixed:
 
@@ -38,7 +38,7 @@
 
 ## File Structure:
 ```
-/home/claude/
+/home
 ├── index.html          (Entry point - Welcome page)
 ├── login.html          (Login page)
 ├── register.html       (Registration page)
