@@ -1,66 +1,129 @@
 // Settings Page Logic
+import { db, auth } from "./firebase-config.js";
+import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { applyTheme, saveTheme, loadAndApplyTheme, THEMES } from "./theme.js";
+import { sendTestNotification } from "./notifications.js";
+import { logout } from "./auth.js";
 
-if (document.getElementById('settingsPage')) {
-  checkAuth();
-  loadSettings();
-  setupSettingsListeners();
-}
+window.logout = logout;
 
-function loadSettings() {
-  const email = Storage.getCurrentUser();
-  const user = Storage.findUser(email);
-  const settings = Storage.getSettings();
-  
-  if (user) {
-    document.getElementById('userFullName').textContent = user.fullName;
+auth.onAuthStateChanged(async (user) => {
+  if (!user) { window.location.href = "login.html"; return; }
+  await loadAndApplyTheme();
+  await loadSettings(user);
+  setupSettingsListeners(user);
+});
+
+async function loadSettings(user) {
+  // Load user profile
+  try {
+    const snap = await getDoc(doc(db, "users", user.uid, "profile", "info"));
+    if (snap.exists()) {
+      const data = snap.data();
+      document.getElementById('userFullName').textContent = data.fullName || user.displayName || '—';
+      document.getElementById('userEmail').textContent    = user.email;
+      document.getElementById('userDOB').textContent      = data.dob
+        ? new Date(data.dob).toLocaleDateString() : '—';
+    } else {
+      document.getElementById('userFullName').textContent = user.displayName || '—';
+      document.getElementById('userEmail').textContent    = user.email;
+      document.getElementById('userDOB').textContent      = '—';
+    }
+  } catch (err) {
     document.getElementById('userEmail').textContent = user.email;
-    document.getElementById('userDOB').textContent = new Date(user.dob).toLocaleDateString();
   }
-  
-  // Load theme
-  document.getElementById('themeSelect').value = settings.theme || 'pastel';
-  document.getElementById('notificationsToggle').textContent = settings.notifications ? 'Enabled' : 'Disabled';
+
+  // Load preferences (theme + notifications)
+  try {
+    const prefSnap = await getDoc(doc(db, "users", user.uid, "settings", "preferences"));
+    const prefs    = prefSnap.exists() ? prefSnap.data() : {};
+
+    const theme = prefs.theme || localStorage.getItem(`theme_${user.uid}`) || 'pastel';
+    document.getElementById('themeSelect').value = theme;
+    applyTheme(theme);
+
+    const notificationsEnabled = prefs.notifications !== false; // default true
+    document.getElementById('notificationsToggle').textContent = notificationsEnabled ? 'Enabled' : 'Disabled';
+    document.getElementById('notificationsToggle').style.color = notificationsEnabled ? '#10b981' : '#ef4444';
+
+    // Store in localStorage for offline use
+    localStorage.setItem(`settings_${user.uid}`, JSON.stringify(prefs));
+  } catch (err) {
+    console.warn("Could not load prefs:", err);
+  }
 }
 
-function setupSettingsListeners() {
-  // Theme change
-  document.getElementById('themeSelect').addEventListener('change', function(e) {
+async function savePreference(user, key, value) {
+  try {
+    await setDoc(
+      doc(db, "users", user.uid, "settings", "preferences"),
+      { [key]: value },
+      { merge: true }
+    );
+    // Update local cache too
+    const cached = JSON.parse(localStorage.getItem(`settings_${user.uid}`) || '{}');
+    cached[key]  = value;
+    localStorage.setItem(`settings_${user.uid}`, JSON.stringify(cached));
+  } catch (err) {
+    console.warn("Could not save preference:", err);
+  }
+}
+
+function setupSettingsListeners(user) {
+  // ── Theme Change ─────────────────────────────────────────────────────────
+  document.getElementById('themeSelect').addEventListener('change', async (e) => {
     const theme = e.target.value;
-    Storage.updateSetting('theme', theme);
-    applyThemePreview(theme);
-    showMessage('Theme updated successfully!', 'success');
+    applyTheme(theme);
+    await saveTheme(theme);           // saves to Firestore + localStorage
+    await savePreference(user, 'theme', theme);
+    showMessage('Theme updated!', 'success');
   });
-  
-  // Edit profile
-  document.getElementById('editProfileBtn').addEventListener('click', showEditProfileModal);
-  
-  // Change password
+
+  // ── Edit Profile ──────────────────────────────────────────────────────────
+  document.getElementById('editProfileBtn').addEventListener('click', () => showEditProfileModal(user));
+
+  // ── Change Password ───────────────────────────────────────────────────────
   document.getElementById('changePasswordBtn').addEventListener('click', showChangePasswordModal);
-  
-  // Toggle notifications
-  document.getElementById('toggleNotificationsBtn').addEventListener('click', function() {
-    const settings = Storage.getSettings();
-    const newValue = !settings.notifications;
-    Storage.updateSetting('notifications', newValue);
+
+  // ── Notifications Toggle ─────────────────────────────────────────────────
+  document.getElementById('toggleNotificationsBtn').addEventListener('click', async () => {
+    const cached   = JSON.parse(localStorage.getItem(`settings_${user.uid}`) || '{}');
+    const newValue = !(cached.notifications !== false);
+    await savePreference(user, 'notifications', newValue);
     document.getElementById('notificationsToggle').textContent = newValue ? 'Enabled' : 'Disabled';
+    document.getElementById('notificationsToggle').style.color = newValue ? '#10b981' : '#ef4444';
     showMessage(`Notifications ${newValue ? 'enabled' : 'disabled'}!`, 'success');
   });
-  
-  // Export data
-  document.getElementById('exportDataBtn').addEventListener('click', exportUserData);
-  
-  // Delete account
-  document.getElementById('deleteAccountBtn').addEventListener('click', deleteAccount);
+
+  // ── Test Notification ─────────────────────────────────────────────────────
+  const testBtn = document.getElementById('testNotificationBtn');
+  if (testBtn) {
+    testBtn.addEventListener('click', async () => {
+      testBtn.textContent = 'Sending...';
+      testBtn.disabled    = true;
+      try {
+        await sendTestNotification(user);
+        showMessage(`✅ Test email sent to ${user.email}!`, 'success');
+      } catch (err) {
+        showMessage('⚠️ Email failed — check EmailJS setup in notifications.js', 'error');
+        console.error(err);
+      } finally {
+        testBtn.textContent = 'Send Test Email';
+        testBtn.disabled    = false;
+      }
+    });
+  }
+
+  // ── Export Data ───────────────────────────────────────────────────────────
+  document.getElementById('exportDataBtn').addEventListener('click', () => exportUserData(user));
+
+  // ── Delete Account ────────────────────────────────────────────────────────
+  document.getElementById('deleteAccountBtn').addEventListener('click', () => deleteAccount(user));
 }
 
-function applyThemePreview(theme) {
-  document.body.setAttribute('data-theme', theme);
-}
+// ── Modals ─────────────────────────────────────────────────────────────────
 
-function showEditProfileModal() {
-  const email = Storage.getCurrentUser();
-  const user = Storage.findUser(email);
-  
+function showEditProfileModal(user) {
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
   modal.innerHTML = `
@@ -68,33 +131,31 @@ function showEditProfileModal() {
       <h2>Edit Profile</h2>
       <form id="editProfileForm">
         <div class="form-group">
-          <label for="editFullName">Full Name</label>
-          <input type="text" id="editFullName" value="${user.fullName}" required>
+          <label>Full Name</label>
+          <input type="text" id="editFullName" placeholder="Full Name" required>
         </div>
         <div class="form-group">
-          <label for="editDOB">Date of Birth</label>
-          <input type="date" id="editDOB" value="${user.dob}" required>
+          <label>Date of Birth</label>
+          <input type="date" id="editDOB">
         </div>
         <button type="submit" class="btn-primary">Save Changes</button>
         <button type="button" onclick="this.closest('.modal-overlay').remove()" class="btn-secondary">Cancel</button>
       </form>
-    </div>
-  `;
-  
+    </div>`;
   document.body.appendChild(modal);
-  
-  document.getElementById('editProfileForm').addEventListener('submit', function(e) {
+
+  document.getElementById('editProfileForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const users = Storage.getUsers();
-    const userIndex = users.findIndex(u => u.email === email);
-    
-    if (userIndex !== -1) {
-      users[userIndex].fullName = document.getElementById('editFullName').value;
-      users[userIndex].dob = document.getElementById('editDOB').value;
-      localStorage.setItem('users', JSON.stringify(users));
-      showMessage('Profile updated successfully!', 'success');
+    const fullName = document.getElementById('editFullName').value.trim();
+    const dob      = document.getElementById('editDOB').value;
+    try {
+      await setDoc(doc(db, "users", user.uid, "profile", "info"), { fullName, dob }, { merge: true });
+      document.getElementById('userFullName').textContent = fullName;
+      if (dob) document.getElementById('userDOB').textContent = new Date(dob).toLocaleDateString();
+      showMessage('Profile updated!', 'success');
       modal.remove();
-      loadSettings();
+    } catch (err) {
+      showMessage('Error: ' + err.message, 'error');
     }
   });
 }
@@ -105,96 +166,65 @@ function showChangePasswordModal() {
   modal.innerHTML = `
     <div class="modal-content">
       <h2>Change Password</h2>
-      <form id="changePasswordForm">
-        <div class="form-group">
-          <label for="currentPassword">Current Password</label>
-          <input type="password" id="currentPassword" required>
-        </div>
-        <div class="form-group">
-          <label for="newPassword">New Password</label>
-          <input type="password" id="newPassword" required minlength="6">
-        </div>
-        <div class="form-group">
-          <label for="confirmNewPassword">Confirm New Password</label>
-          <input type="password" id="confirmNewPassword" required>
-        </div>
-        <button type="submit" class="btn-primary">Change Password</button>
-        <button type="button" onclick="this.closest('.modal-overlay').remove()" class="btn-secondary">Cancel</button>
-      </form>
-    </div>
-  `;
-  
+      <p style="color:#6b7280;margin-bottom:20px;font-size:14px;">
+        A password reset email will be sent to your inbox.
+      </p>
+      <button id="sendResetBtn" class="btn-primary">Send Reset Email</button>
+      <button onclick="this.closest('.modal-overlay').remove()" class="btn-secondary">Cancel</button>
+    </div>`;
   document.body.appendChild(modal);
-  
-  document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const email = Storage.getCurrentUser();
-    const user = Storage.findUser(email);
-    const currentPassword = document.getElementById('currentPassword').value;
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmPassword = document.getElementById('confirmNewPassword').value;
-    
-    if (user.password !== currentPassword) {
-      showMessage('Current password is incorrect!', 'error');
-      return;
-    }
-    
-    if (newPassword !== confirmPassword) {
-      showMessage('New passwords do not match!', 'error');
-      return;
-    }
-    
-    if (Storage.updateUserPassword(email, newPassword)) {
-      showMessage('Password changed successfully!', 'success');
+
+  document.getElementById('sendResetBtn').addEventListener('click', async () => {
+    const { sendPasswordResetEmail } = await import(
+      "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"
+    );
+    try {
+      await sendPasswordResetEmail(auth, auth.currentUser.email);
+      showMessage('Password reset email sent!', 'success');
       modal.remove();
+    } catch (err) {
+      showMessage('Error: ' + err.message, 'error');
     }
   });
 }
 
-function exportUserData() {
-  const email = Storage.getCurrentUser();
-  const user = Storage.findUser(email);
-  const tasks = Storage.getUserTasks();
-  const settings = Storage.getSettings();
-  
-  const data = {
-    user: { ...user, password: '***HIDDEN***' },
-    tasks,
-    settings,
-    exportDate: new Date().toISOString()
-  };
-  
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `student-planner-data-${Date.now()}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  
-  showMessage('Data exported successfully!', 'success');
+async function exportUserData(user) {
+  try {
+    const { getDocs, collection } = await import(
+      "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+    );
+    const snap  = await getDocs(collection(db, "users", user.uid, "tasks"));
+    const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const data  = { email: user.email, tasks, exportDate: new Date().toISOString() };
+    const blob  = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url   = URL.createObjectURL(blob);
+    const a     = document.createElement('a');
+    a.href = url; a.download = `student-planner-${Date.now()}.json`; a.click();
+    URL.revokeObjectURL(url);
+    showMessage('Data exported!', 'success');
+  } catch (err) {
+    showMessage('Export failed: ' + err.message, 'error');
+  }
 }
 
-function deleteAccount() {
-  if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-    if (confirm('This will permanently delete all your data. Continue?')) {
-      const email = Storage.getCurrentUser();
-      
-      // Delete user
-      const users = Storage.getUsers();
-      const filtered = users.filter(u => u.email !== email);
-      localStorage.setItem('users', JSON.stringify(filtered));
-      
-      // Delete user tasks
-      const tasks = Storage.getTasks();
-      const filteredTasks = tasks.filter(t => t.userId !== email);
-      Storage.saveTasks(filteredTasks);
-      
-      showMessage('Account deleted. Redirecting...', 'success');
-      setTimeout(() => {
-        Storage.logout();
-        window.location.href = 'login.html';
-      }, 2000);
-    }
+async function deleteAccount(user) {
+  if (!confirm('Delete your account? This cannot be undone.')) return;
+  if (!confirm('All your tasks will be permanently deleted. Continue?')) return;
+  try {
+    await user.delete();
+    showMessage('Account deleted. Redirecting...', 'success');
+    setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+  } catch (err) {
+    showMessage('Error: ' + err.message + ' — Please re-login and try again.', 'error');
   }
+}
+
+function showMessage(message, type) {
+  document.querySelector('.message-toast')?.remove();
+  const div = document.createElement('div');
+  div.className = `message-toast ${type}`;
+  div.textContent = message;
+  document.body.appendChild(div);
+  setTimeout(() => div.classList.add('show'), 100);
+  setTimeout(() => { div.classList.remove('show'); setTimeout(() => div.remove(), 300); }, 3500);
 }

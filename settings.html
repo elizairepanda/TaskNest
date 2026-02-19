@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings - Student Planner</title>
+    <title>Settings - TaskNest</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="dashboard-page" id="settingsPage">
     <div class="page-container">
         <nav class="navbar">
             <div class="navbar-left">
-                <div class="logo">LOGO</div>
+                <div class="logo">TaskNest</div>
                 <div class="nav-tabs">
                     <a href="home.html">HOME</a>
                     <a href="calendar.html">CALENDAR</a>
@@ -20,61 +20,81 @@
             </div>
             <div class="navbar-right">
                 <input type="text" class="search-box" placeholder="Search">
-                <div class="profile-icon" onclick="logout()" style="cursor: pointer;" title="Logout">👤</div>
+                <div class="profile-icon" onclick="logout()" style="cursor:pointer;" title="Logout">👤</div>
             </div>
         </nav>
-        
+
         <div class="page-content">
             <div class="content-card">
                 <h1>Settings</h1>
-                <p style="margin-bottom: 40px;">Manage your account settings and preferences.</p>
-                
+                <p style="margin-bottom:40px;color:#6b7280;">Manage your account settings and preferences.</p>
+
+                <!-- Account Information -->
                 <div class="settings-section">
                     <h2>Account Information</h2>
                     <div class="settings-item">
                         <label>Full Name</label>
-                        <span style="color: #6b7280;" id="userFullName">-</span>
+                        <span id="userFullName" style="color:#6b7280;">—</span>
                     </div>
                     <div class="settings-item">
                         <label>Email Address</label>
-                        <span style="color: #6b7280;" id="userEmail">-</span>
+                        <span id="userEmail" style="color:#6b7280;">—</span>
                     </div>
                     <div class="settings-item">
                         <label>Date of Birth</label>
-                        <span style="color: #6b7280;" id="userDOB">-</span>
+                        <span id="userDOB" style="color:#6b7280;">—</span>
                     </div>
                     <div class="settings-item">
                         <label></label>
                         <button id="editProfileBtn" class="settings-button">Edit Profile</button>
                     </div>
                 </div>
-                
+
+                <!-- Appearance -->
                 <div class="settings-section">
                     <h2>Appearance</h2>
                     <div class="settings-item">
                         <label>Theme</label>
                         <select id="themeSelect">
-                            <option value="pastel">Pastel Gradient</option>
-                            <option value="ocean">Ocean Blue</option>
-                            <option value="forest">Forest Green</option>
-                            <option value="sunset">Sunset Orange</option>
-                            <option value="lavender">Lavender Purple</option>
-                            <option value="mint">Mint Fresh</option>
+                            <option value="pastel">🌸 Pastel Gradient</option>
+                            <option value="ocean">🌊 Ocean Blue</option>
+                            <option value="forest">🌿 Forest Green</option>
+                            <option value="sunset">🌅 Sunset Orange</option>
+                            <option value="lavender">💜 Lavender Purple</option>
+                            <option value="mint">🍃 Mint Fresh</option>
                         </select>
                     </div>
+                    <div class="settings-item" style="padding-top:0;">
+                        <label></label>
+                        <small style="color:#9ca3af;">Changes apply instantly and are saved to your account</small>
+                    </div>
                 </div>
-                
+
+                <!-- Notifications -->
                 <div class="settings-section">
-                    <h2>Preferences</h2>
+                    <h2>Email Notifications</h2>
+                    <p style="color:#6b7280;font-size:14px;margin-bottom:16px;">
+                        Get an email reminder when tasks are due within 2 days. Emails are sent once per day automatically when you open the app.
+                    </p>
                     <div class="settings-item">
-                        <label>Email Notifications</label>
-                        <div>
-                            <span style="color: #6b7280; margin-right: 10px;" id="notificationsToggle">Enabled</span>
+                        <label>Due-Soon Reminders</label>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <span id="notificationsToggle" style="font-weight:600;">Enabled</span>
                             <button id="toggleNotificationsBtn" class="settings-button">Toggle</button>
                         </div>
                     </div>
+                    <div class="settings-item">
+                        <label>Test Email</label>
+                        <div>
+                            <button id="testNotificationBtn" class="settings-button">Send Test Email</button>
+                            <div style="font-size:12px;color:#9ca3af;margin-top:6px;">
+                                ⚠️ Requires EmailJS setup — see <code>notifications.js</code>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                
+
+                <!-- Security -->
                 <div class="settings-section">
                     <h2>Security</h2>
                     <div class="settings-item">
@@ -82,7 +102,8 @@
                         <button id="changePasswordBtn" class="settings-button">Change Password</button>
                     </div>
                 </div>
-                
+
+                <!-- Data Management -->
                 <div class="settings-section">
                     <h2>Data Management</h2>
                     <div class="settings-item">
@@ -91,18 +112,15 @@
                     </div>
                     <div class="settings-item">
                         <label>Delete Account</label>
-                        <button id="deleteAccountBtn" class="settings-button" style="background: #ef4444;">Delete</button>
+                        <button id="deleteAccountBtn" class="settings-button" style="background:#ef4444;">Delete Account</button>
                     </div>
                 </div>
-                
+
                 <button onclick="logout()" class="btn-logout">Logout</button>
             </div>
         </div>
     </div>
-    
-    <script src="storage.js"></script>
-    <script type="module" src="auth.js"></script>
-    <script src="app.js"></script>
-    <script src="settings.js"></script>
+
+    <script type="module" src="settings.js"></script>
 </body>
 </html>

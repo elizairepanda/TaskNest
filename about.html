@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Student Planner</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dashboard-page">
+    <div class="page-container">
+        <nav class="navbar">
+            <div class="navbar-left">
+                <div class="logo">LOGO</div>
+                <div class="nav-tabs">
+                    <a href="home.html">HOME</a>
+                    <a href="calendar.html">CALENDAR</a>
+                    <a href="about.html">ABOUT</a>
+                    <a href="settings.html">SETTINGS</a>
+                </div>
+            </div>
+            <div class="navbar-right">
+                <input type="text" class="search-box" placeholder="Search">
+                <div class="profile-icon" onclick="logout()" style="cursor: pointer;" title="Logout">👤</div>
+            </div>
+        </nav>
+        
+        <div class="page-content">
+            <div class="content-card">
+                <h1>About Student Planner</h1>
+                <p>Student Planner is a comprehensive task management system designed specifically for students to organize their academic life efficiently.</p>
+                
+                <h2 style="font-size: 24px; margin-top: 30px; margin-bottom: 15px; color: #1f2937;">Our Mission</h2>
+                <p>We aim to help students stay organized, manage their time effectively, and achieve academic success through intuitive planning tools.</p>
+                
+                <h2 style="font-size: 24px; margin-top: 30px; margin-bottom: 15px; color: #1f2937;">Features</h2>
+                <p>• Calendar view for managing assignments and deadlines</p>
+                <p>• Task tracking with priority levels</p>
+                <p>• Recent activity monitoring</p>
+                <p>• Customizable themes</p>
+                <p>• Data export capabilities</p>
+                <p>• Clean and intuitive interface</p>
+                
+                <h2 style="font-size: 24px; margin-top: 30px; margin-bottom: 15px; color: #1f2937;">Technical Details</h2>
+                <p>Built with pure HTML, CSS, and JavaScript. All data is stored locally in your browser using localStorage, ensuring your privacy and giving you full control over your information.</p>
+                
+                <h2 style="font-size: 24px; margin-top: 30px; margin-bottom: 15px; color: #1f2937;">Contact</h2>
+                <p>For support or inquiries, please reach out to: support@studentplanner.com</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="storage.js"></script>
+    <script src="auth.js"></script>
+    <script src="app.js"></script>
+    <script>
+        if (document.querySelector('.dashboard-page')) {
+            checkAuth();
+            applyTheme();
+        }
+    </script>
+</body>
+</html>

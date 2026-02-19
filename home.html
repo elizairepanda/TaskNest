@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - Student Planner</title>
+    <title>Home - TaskNest</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="dashboard-page">
     <div class="page-container">
         <nav class="navbar">
             <div class="navbar-left">
-                <div class="logo">LOGO</div>
+                <div class="logo">TaskNest</div>
                 <div class="nav-tabs">
                     <a href="home.html">HOME</a>
                     <a href="calendar.html">CALENDAR</a>
@@ -20,23 +20,21 @@
             </div>
             <div class="navbar-right">
                 <input type="text" class="search-box" placeholder="Search">
-                <div class="profile-icon" onclick="logout()" style="cursor: pointer;" title="Logout">👤</div>
+                <div class="profile-icon" onclick="logout()" style="cursor:pointer;" title="Logout">👤</div>
             </div>
         </nav>
-        
+
         <div class="page-content">
             <div class="content-card">
-                <h1>Welcome to Your Student Planner</h1>
+                <h1>Welcome to Your TaskNest</h1>
                 <p>This is your home dashboard where you can manage all your academic tasks, assignments, and schedules in one place.</p>
                 <p>Get started by exploring the calendar to view your upcoming due dates, or check your recent activities to stay on track with your goals.</p>
                 <p>Stay organized, stay productive, and achieve your academic success with our intuitive planner interface.</p>
-                
-                <a href="dashboard.html" class="btn-primary" style="max-width: 200px; margin-top: 30px; display: inline-block;">Go to Dashboard</a>
+                <a href="dashboard.html" class="btn-primary" style="max-width:200px;margin-top:30px;display:inline-block;">Go to Dashboard</a>
             </div>
         </div>
     </div>
-    
-    <script type="module" src="auth.js"></script>
+
     <script type="module" src="app.js"></script>
 </body>
 </html>

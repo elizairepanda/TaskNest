@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Student Planner</title>
+    <title>Dashboard - TaskNest</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="dashboard-page">
     <div class="dashboard-wrapper">
         <nav class="navbar">
             <div class="navbar-left">
-                <div class="logo">LOGO</div>
+                <div class="logo">TaskNest</div>
                 <div class="nav-tabs">
                     <a href="home.html">HOME</a>
                     <a href="calendar.html">CALENDAR</a>
@@ -20,44 +20,42 @@
             </div>
             <div class="navbar-right">
                 <input type="text" class="search-box" placeholder="Search">
-                <div class="profile-icon" onclick="logout()" style="cursor: pointer;" title="Logout">👤</div>
+                <div class="profile-icon" onclick="logout()" style="cursor:pointer;" title="Logout">👤</div>
             </div>
         </nav>
-        
+
         <div class="dashboard-content">
             <div class="main-content">
                 <div class="calendar-section">
-                    <div class="calendar-header">MAY 2026</div>
+                    <div class="calendar-header">Loading...</div>
                     <div class="calendar-grid"></div>
                 </div>
-                
+
                 <div class="upcoming-section">
                     <h3>Upcoming Due Dates</h3>
                     <div class="task-grid"></div>
                 </div>
             </div>
-            
+
             <div class="sidebar">
                 <div class="activity-card">
                     <h3>Recent Activity</h3>
-                    <div class="activity-item">Task 1</div>
-                    <div class="activity-item">Task 2</div>
-                    <div class="activity-item">Task 3</div>
+                    <div class="activity-item">—</div>
+                    <div class="activity-item">—</div>
+                    <div class="activity-item">—</div>
                 </div>
-                
                 <div class="activity-card">
-                    <h3>Recent Activity</h3>
-                    <div class="activity-item">Task 1</div>
-                    <div class="activity-item">Task 2</div>
-                    <div class="activity-item">Task 3</div>
+                    <h3>Pinned</h3>
+                    <div class="activity-item">—</div>
+                    <div class="activity-item">—</div>
+                    <div class="activity-item">—</div>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <button class="fab-button" onclick="showAddTaskForm()" title="Add Task">+</button>
-    
-    <script type="module" src="auth.js"></script>
+
     <script type="module" src="app.js"></script>
 </body>
 </html>
