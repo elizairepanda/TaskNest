@@ -84,7 +84,5 @@ Works on all modern browsers that support:
 
 ## Notes:
 
-- All data is stored locally in your browser
-- No backend server required
-- Clear browser data will delete all stored information
+- Data is restored in Firebase Server
 - Each user's data is isolated by email address
