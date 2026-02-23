@@ -5,41 +5,147 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - TaskNest</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .password-wrapper { position: relative; }
+        .password-wrapper input { padding-right: 44px; }
+        .toggle-pw {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer; font-size: 18px;
+            color: #6b7280; padding: 0; line-height: 1;
+        }
+        .toggle-pw:hover { color: #a78bfa; }
+        .pw-strength, .pw-match { margin-top: 6px; font-size: 12px; font-weight: 600; }
+        .strength-weak   { color: #ef4444; }
+        .strength-medium { color: #f59e0b; }
+        .strength-strong { color: #10b981; }
+        .match-ok  { color: #10b981; }
+        .match-err { color: #ef4444; }
+    </style>
 </head>
 <body>
     <div class="auth-container">
-        <h1>Create Password</h1>
+        <h1>Create Account</h1>
         <p class="subtitle">Join TaskNest</p>
-        
         <form id="registerForm">
             <div class="form-group">
                 <label for="fullname">Full Name</label>
-                <input type="text" id="fullname" name="fullname" placeholder="Full Name" required>
+                <input type="text" id="fullname" placeholder="Full Name" required>
             </div>
-            
             <div class="form-group">
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" placeholder="Email" required>
+                <input type="email" id="email" placeholder="Email" required>
             </div>
-            
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="••••••••" required minlength="6">
+                <div class="password-wrapper">
+                    <input type="password" id="password" placeholder="Min. 6 characters" required minlength="6">
+                    <button type="button" class="toggle-pw" data-target="password">👁️</button>
+                </div>
+                <div class="pw-strength" id="strengthMsg"></div>
             </div>
-            
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="confirmPassword" placeholder="Re-enter password" required>
+                    <button type="button" class="toggle-pw" data-target="confirmPassword">👁️</button>
+                </div>
+                <div class="pw-match" id="matchMsg"></div>
+            </div>
             <div class="form-group">
                 <label for="dob">Date of Birth</label>
-                <input type="date" id="dob" name="dob" required>
+                <input type="date" id="dob" required>
             </div>
-            
             <button type="submit" class="btn-primary">Sign Up</button>
-            
             <div class="auth-links">
                 <a href="login.html">Already registered? Login</a>
             </div>
         </form>
     </div>
-    
-    <script type="module" src="auth.js"></script>
+    <script>
+        document.querySelectorAll('.toggle-pw').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const input = document.getElementById(btn.dataset.target);
+                input.type = input.type === 'password' ? 'text' : 'password';
+                btn.textContent = input.type === 'password' ? '👁️' : '🙈';
+            });
+        });
+        const pwInput = document.getElementById('password');
+        const cfInput = document.getElementById('confirmPassword');
+        const strengthMsg = document.getElementById('strengthMsg');
+        const matchMsg = document.getElementById('matchMsg');
+        pwInput.addEventListener('input', () => {
+            const v = pwInput.value;
+            if (!v) { strengthMsg.textContent = ''; return; }
+            if (v.length < 6) {
+                strengthMsg.textContent = '⚠️ Too short (min 6 chars)';
+                strengthMsg.className = 'pw-strength strength-weak';
+            } else if (v.length < 10 || !/[A-Z]/.test(v) || !/[0-9]/.test(v)) {
+                strengthMsg.textContent = '🟡 Medium strength';
+                strengthMsg.className = 'pw-strength strength-medium';
+            } else {
+                strengthMsg.textContent = '✅ Strong password';
+                strengthMsg.className = 'pw-strength strength-strong';
+            }
+            checkMatch();
+        });
+        cfInput.addEventListener('input', checkMatch);
+        function checkMatch() {
+            if (!cfInput.value) { matchMsg.textContent = ''; return; }
+            if (pwInput.value === cfInput.value) {
+                matchMsg.textContent = '✅ Passwords match'; matchMsg.className = 'pw-match match-ok';
+            } else {
+                matchMsg.textContent = '❌ Passwords do not match'; matchMsg.className = 'pw-match match-err';
+            }
+        }
+    </script>
+    <script type="module">
+        import { db, auth } from "./firebase-config.js";
+        import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fullName = document.getElementById('fullname').value.trim();
+            const email    = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirm  = document.getElementById('confirmPassword').value;
+            const dob      = document.getElementById('dob').value;
+
+            if (!fullName || !email || !password || !confirm || !dob)
+                return showToast('Please fill in all fields.', 'error');
+            if (password.length < 6)
+                return showToast('Password must be at least 6 characters.', 'error');
+            if (password !== confirm)
+                return showToast('Passwords do not match!', 'error');
+
+            try {
+                // Step 1: Create the Firebase Auth account
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // Step 2: Save fullName + dob to Firestore right away
+                await setDoc(doc(db, "users", user.uid, "profile", "info"), {
+                    fullName,
+                    dob,
+                    email,
+                    createdAt: new Date().toISOString()
+                });
+
+                showToast('Account created! Redirecting...', 'success');
+                setTimeout(() => window.location.href = 'login.html', 1500);
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        });
+
+        function showToast(msg, type) {
+            document.querySelector('.message-toast')?.remove();
+            const d = document.createElement('div');
+            d.className = `message-toast ${type}`; d.textContent = msg;
+            document.body.appendChild(d);
+            setTimeout(() => d.classList.add('show'), 100);
+            setTimeout(() => { d.classList.remove('show'); setTimeout(() => d.remove(), 300); }, 3500);
+        }
+    </script>
 </body>
 </html>
